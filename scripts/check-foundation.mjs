@@ -9,11 +9,12 @@ import { projectEvidence } from '../src/content/projectEvidence.ts';
 
 // Native-browser integration checks, with no test-runner package or product dependency.
 const root = resolve(import.meta.dirname, '..');
-const uxMode = process.argv.includes('--ux');
+const motionMode = process.argv.includes('--motion');
+const uxMode = motionMode || process.argv.includes('--ux');
 const profileMode = uxMode || process.argv.includes('--profile');
 const projectsMode = profileMode || process.argv.includes('--projects');
 const heroMode = projectsMode || process.argv.includes('--hero');
-const output = join(root, uxMode ? 'docs/validation/phase07' : profileMode ? 'docs/validation/phase06' : projectsMode ? 'docs/validation/phase05' : heroMode ? 'docs/validation/phase04' : 'docs/validation/phase03');
+const output = join(root, motionMode ? 'docs/validation/phase07_5' : uxMode ? 'docs/validation/phase07' : profileMode ? 'docs/validation/phase06' : projectsMode ? 'docs/validation/phase05' : heroMode ? 'docs/validation/phase04' : 'docs/validation/phase03');
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 const chromePath = [process.env.CHROME_PATH, 'C:/Program Files/Google/Chrome/Application/chrome.exe', 'C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe', '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome', '/usr/bin/google-chrome', '/usr/bin/chromium'].find(p => p && existsSync(p));
 assert.ok(chromePath, 'Set CHROME_PATH to an installed Chrome/Chromium browser.');
@@ -22,6 +23,8 @@ mkdirSync(output, { recursive: true });
 const children = [];
 const report = { status: 'RUNNING', browser: 'Chrome headless, Windows host', views: [], menu: [], privacy: [], runtimeErrors: [] };
 let ws;
+const screencast = [];
+let traceStream;
 const guard = setTimeout(() => { children.forEach(child => child.kill()); process.exit(2); }, 90000);
 function start(args) {
   const child = spawn(process.execPath, [join(root, 'node_modules/vite/bin/vite.js'), ...args], { cwd: root, stdio: 'ignore', windowsHide: true });
@@ -72,6 +75,11 @@ try {
     const message = JSON.parse(event.data);
     if (message.id && pending.has(message.id)) { pending.get(message.id)(message); pending.delete(message.id); }
     if (message.method === 'Runtime.exceptionThrown') report.runtimeErrors.push(message.params.exceptionDetails.text);
+    if (message.method === 'Page.screencastFrame') {
+      screencast.push({data:message.params.data,timestamp:message.params.metadata.timestamp});
+      void send('Page.screencastFrameAck',{sessionId:message.params.sessionId},message.sessionId);
+    }
+    if (message.method === 'Tracing.tracingComplete') traceStream = message.params.stream;
   };
   const send = async (method, params = {}, sessionId) => {
     const message = await new Promise(r => { const n = ++id; pending.set(n, r); ws.send(JSON.stringify({ id: n, method, params, sessionId })); });
@@ -101,6 +109,7 @@ try {
     });
   };
   await tab('Page.enable'); await tab('Runtime.enable');
+  if (motionMode) await tab('Emulation.setEmulatedMedia',{features:[{name:'prefers-reduced-motion',value:'reduce'}]});
   // Confirm both the development app and built preview actually mount.
   await navigate('http://127.0.0.1:5175/'); report.developmentMount = 'PASS';
   const sizes = [[1440, 900], [1024, 768], ...(heroMode ? [[820, 1180]] : []), [768, 1024], [390, 844], [320, 844]];
@@ -346,6 +355,79 @@ try {
     await tab('Emulation.setEmulatedMedia',{features:[]});
     await tab('Emulation.setDeviceMetricsOverride',{width:320,height:844,deviceScaleFactor:1,mobile:true});
     await navigate('http://127.0.0.1:4180/');
+  }
+  if (motionMode) {
+    await tab('Emulation.setDeviceMetricsOverride',{width:1440,height:900,deviceScaleFactor:1,mobile:false});
+    await tab('Emulation.setEmulatedMedia',{features:[]});
+    await tab('Page.addScriptToEvaluateOnNewDocument',{source:`window.motionShifts=[]; new PerformanceObserver(list=>list.getEntries().forEach(e=>{if(!e.hadRecentInput)window.motionShifts.push(e.value)})).observe({type:'layout-shift',buffered:true});`});
+    const shot=async name=>{const s=await tab('Page.captureScreenshot',{format:'png',captureBeyondViewport:false});writeFileSync(join(output,name),Buffer.from(s.data,'base64'))};
+    const terminalState=()=>evaluate(`({text:document.querySelector('.profile-terminal__code').textContent,height:document.querySelector('.profile-terminal__code').getBoundingClientRect().height,typing:!!document.querySelector('[data-typing]'),caret:document.querySelectorAll('.is-typing').length,animations:document.getAnimations().filter(a=>a.playState==='running').length})`);
+    await tab('Page.startScreencast',{format:'jpeg',quality:75,maxWidth:960,maxHeight:600,everyNthFrame:2});
+    await navigate('http://127.0.0.1:4180/');
+    const initial=await terminalState(); assert.ok(initial.typing && initial.text.includes('Bùi Ngọc Thái'));
+    await shot('motion-initial.png'); await sleep(850); const mid=await terminalState(); await shot('motion-mid.png');
+    assert.equal(initial.height,mid.height); assert.ok(mid.caret<=1); await sleep(1600); const final=await terminalState(); await shot('motion-settled.png');
+    assert.equal(initial.height,final.height); assert.equal(initial.text,final.text); assert.equal(final.typing,false); assert.equal(final.caret,0); assert.equal(final.animations,0);
+    await tab('Page.stopScreencast');
+    mkdirSync(join(output,'recording'),{recursive:true});
+    screencast.forEach((frame,index)=>writeFileSync(join(output,'recording',`${index}.jpg`),Buffer.from(frame.data,'base64')));
+    writeFileSync(join(output,'recording/frames.json'),JSON.stringify(screencast.map(({timestamp})=>timestamp)));
+    assert.equal(await evaluate('window.motionShifts.reduce((a,b)=>a+b,0)'),0,'Entrance/typewriter layout shift');
+    await evaluate(`document.querySelector('#expertise').scrollIntoView()`); await sleep(450); await evaluate('scrollTo(0,0)'); await sleep(100);
+    assert.equal((await terminalState()).typing,false,'Typing must not restart after scroll');
+    await tab('Performance.enable');
+    await send('Tracing.start',{categories:'devtools.timeline,toplevel,blink.user_timing',transferMode:'ReturnAsStream'});
+    const metrics=async()=>Object.fromEntries((await tab('Performance.getMetrics')).metrics.map(m=>[m.name,m.value]));
+    const start=await metrics();
+    await evaluate(`window.frameDeltas=[];window.frameProbe=new Promise(resolve=>{let last=performance.now(),n=0;function tick(t){window.frameDeltas.push(t-last);last=t;if(++n<100)requestAnimationFrame(tick);else resolve(true)}requestAnimationFrame(tick)});true`);
+    for(let i=0;i<90;i++) await tab('Input.dispatchMouseEvent',{type:'mouseMoved',x:100+i*10,y:200+(i%5)*20});
+    await evaluate('window.frameProbe'); const end=await metrics();
+    const frames=await evaluate('window.frameDeltas.slice(1).sort((a,b)=>a-b)');
+    assert.equal(await evaluate(`getComputedStyle(document.querySelector('.motion-light')).pointerEvents`),'none');
+    await shot('pointer-light.png');
+    const idleStart=await metrics(); await sleep(700); const idleEnd=await metrics();
+    await send('Tracing.end');
+    for(let i=0;i<100&&!traceStream;i++) await sleep(20);
+    if(traceStream) {
+      let trace='';let chunk;
+      do {chunk=await send('IO.read',{handle:traceStream});trace+=chunk.base64Encoded?Buffer.from(chunk.data,'base64').toString('utf8'):chunk.data;} while(!chunk.eof);
+      writeFileSync(join(output,'pointer-trace.json'),trace);await send('IO.close',{handle:traceStream});
+    }
+    report.motionExpansion={initial:{...initial,text:undefined},mid:{...mid,text:undefined},final:{...final,text:undefined},layoutShift:0,pointer:{events:90,frameMedianMs:frames[Math.floor(frames.length/2)],frameP95Ms:frames[Math.floor(frames.length*.95)],taskDurationSeconds:end.TaskDuration-start.TaskDuration,scriptDurationSeconds:end.ScriptDuration-start.ScriptDuration,layoutCount:end.LayoutCount-start.LayoutCount},idle:{sampleMs:700,taskDurationSeconds:idleEnd.TaskDuration-idleStart.TaskDuration}};
+    // Test interruption, hidden-state completion and reduced-motion changes during playback.
+    for(const reason of ['selection','visibility','reduced']) {
+      await navigate('http://127.0.0.1:4180/');
+      if(reason==='selection') await evaluate(`(()=>{const r=document.createRange();r.selectNodeContents(document.querySelector('.profile-terminal__code'));getSelection().removeAllRanges();getSelection().addRange(r)})()`);
+      if(reason==='visibility') await evaluate(`Object.defineProperty(document,'hidden',{configurable:true,value:true});document.dispatchEvent(new Event('visibilitychange'))`);
+      if(reason==='reduced') await tab('Emulation.setEmulatedMedia',{features:[{name:'prefers-reduced-motion',value:'reduce'}]});
+      await sleep(80); assert.equal((await terminalState()).typing,false,reason+' interruption'); assert.equal((await terminalState()).caret,0);
+      await tab('Emulation.setEmulatedMedia',{features:[]});
+    }
+    await navigate('http://127.0.0.1:4180/#project-mlops');assert.equal((await terminalState()).typing,false,'Direct case hash skips intro');
+    const fallback=await tab('Page.addScriptToEvaluateOnNewDocument',{source:`Element.prototype.animate=()=>{throw new Error('Simulated animation failure')}`});
+    await navigate('http://127.0.0.1:4180/'); await sleep(2200); assert.equal((await terminalState()).caret,0);assert.ok((await terminalState()).text.includes('Cloud & Infrastructure'));
+    await tab('Page.removeScriptToEvaluateOnNewDocument',{identifier:fallback.identifier});
+    await tab('Emulation.setTouchEmulationEnabled',{enabled:true,maxTouchPoints:1});
+    await tab('Emulation.setDeviceMetricsOverride',{width:390,height:844,deviceScaleFactor:1,mobile:true});
+    await navigate('http://127.0.0.1:4180/');await sleep(2300);
+    assert.equal(await evaluate(`getComputedStyle(document.querySelector('.motion-light')).display`),'none','Coarse-pointer static fallback');
+    const target=await evaluate(`(()=>{const r=document.querySelector('.primary-link').getBoundingClientRect();return{x:r.x+20,y:r.y+20}})()`);
+    await tab('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[target]});await sleep(150);await shot('touch-press.png');
+    assert.notEqual(await evaluate(`getComputedStyle(document.querySelector('.primary-link')).transform`),'none',JSON.stringify(await evaluate(`({reduce:matchMedia('(prefers-reduced-motion:reduce)').matches,pressed:document.querySelector('.primary-link').className,active:document.querySelector('.primary-link').matches(':active')})`)));
+    await tab('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]});await sleep(150);
+    assert.equal(await evaluate('location.hash'),'#projects');
+    await tab('Emulation.setTouchEmulationEnabled',{enabled:false});
+    await tab('Emulation.setDeviceMetricsOverride',{width:320,height:844,deviceScaleFactor:1,mobile:true});
+    await tab('Emulation.setEmulatedMedia',{features:[{name:'prefers-reduced-motion',value:'reduce'}]});
+    await navigate('http://127.0.0.1:4180/');assert.equal((await terminalState()).typing,false);assert.equal((await terminalState()).animations,0);
+    report.motionExpansion.interruptions='PASS: selection, synthetic visibility change, dynamic reduced motion, direct hash, simulated WAAPI failure';
+    report.motionExpansion.touch='PASS: coarse-pointer fallback and native CTA tap';
+    await tab('Emulation.setScriptExecutionDisabled',{value:true});
+    await tab('Page.navigate',{url:'http://127.0.0.1:4180/'}); await sleep(200);
+    const noJs=await tab('DOMSnapshot.captureSnapshot',{computedStyles:[]});
+    assert.ok(noJs.strings.some(s=>s.includes('Bùi Ngọc Thái'))&&noJs.strings.includes('profile.toml'),'Prerender readable with JavaScript disabled');
+    await tab('Emulation.setScriptExecutionDisabled',{value:false});
+    report.motionExpansion.noJavaScript='PASS: production HTML terminal and name retained with script execution disabled';
   }
   await navigate('http://127.0.0.1:4180/'); await key('Tab');
   assert.ok(await evaluate('document.activeElement.classList.contains("skip-link")&&getComputedStyle(document.activeElement).outlineStyle==="solid"'));
