@@ -1,5 +1,6 @@
-import { useEffect, useRef, useState } from 'react';
+import { useRef } from 'react';
 import { profile } from '../content/profile';
+import useActiveSection from '../hooks/useActiveSection';
 
 const sections = [
   ['intro', 'Intro'],
@@ -11,19 +12,12 @@ const sections = [
 
 export default function Header() {
   const menu = useRef<HTMLDetailsElement>(null);
-  const [current, setCurrent] = useState(() => window.location.hash.slice(1) || 'intro');
-
-  useEffect(() => {
-    const onHashChange = () => setCurrent(window.location.hash.slice(1) || 'intro');
-    window.addEventListener('hashchange', onHashChange);
-    return () => window.removeEventListener('hashchange', onHashChange);
-  }, []);
+  const currentSection = useActiveSection();
 
   function closeMenu() {
     if (menu.current) menu.current.open = false;
   }
 
-  const currentSection = current.startsWith('project-') ? 'projects' : current;
   const links = sections.map(([id, label], index) => (
     <a key={id} href={`#${id}`} aria-current={currentSection === id ? 'location' : undefined} onClick={closeMenu}>
       <span className="nav-index" aria-hidden="true">0{index + 1}</span>{label}
