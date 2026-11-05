@@ -10,8 +10,13 @@ import test from '../assets/icons/ui-flask-conical.svg?raw';
 import table from '../assets/icons/ui-table-2.svg?raw';
 import branch from '../assets/icons/ui-git-branch.svg?raw';
 import box from '../assets/icons/ui-box.svg?raw';
+import mail from '../assets/icons/ui-mail.svg?raw';
+import github from '../assets/icons/ui-github.svg?raw';
+import linkedin from '../assets/icons/ui-linkedin.svg?raw';
+import instagram from '../assets/icons/ui-instagram.svg?raw';
+import pin from '../assets/icons/ui-map-pin.svg?raw';
 
-const icons = { external, up, chevron, copy, check, file, code, config, test, table, branch, box };
+const icons = { external, up, chevron, copy, check, file, code, config, test, table, branch, box, mail, github, linkedin, instagram, pin };
 export type IconName = keyof typeof icons;
 
 // Only trusted, local Lucide SVGs from the pinned asset registry enter this markup.

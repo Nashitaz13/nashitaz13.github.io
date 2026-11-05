@@ -20,10 +20,22 @@
 .about__context p, .contact__content p { max-width: 60ch; color: var(--color-muted); }
 .contact { align-items: baseline; }
 .contact__content .project-action { max-width: 100%; }
-.contact__location { margin-bottom: var(--space-3); }
+.contact__location { display: flex; align-items: center; gap: var(--space-3); margin-bottom: var(--space-3); }
 .contact__content li + li { border-top: 1px solid var(--color-border); }
-.contact__content .project-action { display: flex; width: 100%; padding-block: var(--space-3); }
+.contact__content .project-action { display: flex; width: 100%; min-height: 68px; padding: var(--space-3) var(--space-2); gap: var(--space-3); }
 .contact__content .contact__label { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+.contact__symbol { display: grid; place-items: center; width: 36px; height: 36px; border: 1px solid var(--color-border); border-radius: var(--radius-small); background: var(--color-surface); color: var(--color-muted); transition: border-color 180ms, background-color 180ms, color 180ms, transform 180ms var(--ease-out); }
+.contact__symbol > .ui-icon { width: 20px; height: 20px; }
+.contact-link:focus-visible .contact__symbol { color: var(--color-accent); border-color: var(--color-terminal-border); }
+.contact__content .contact__arrow { color: var(--color-muted); }
+.contact-link { touch-action: manipulation; }
+@media (hover: hover) and (pointer: fine) {
+  .contact-link:hover .contact__symbol { transform: translateY(-2px); color: var(--color-accent); border-color: var(--color-terminal-border); background: var(--color-raised); }
+  .contact-link:hover .contact__arrow { transform: translate(2px,-2px); color: var(--color-accent); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .contact-link:hover .contact__symbol { transform: none; }
+}
 @media (max-width: 900px) {
   .expertise__row, .about, .contact { grid-template-columns: minmax(0, 1fr); gap: var(--space-5); }
   .expertise__context { padding-left: calc(var(--space-5) + 2ch); }

@@ -3,6 +3,15 @@ import { projects } from '../content/projects';
 import { projectEvidence, type PresentedProjectId } from '../content/projectEvidence';
 import '../styles/profile-sections.css';
 import TechnologyStack from './TechnologyStack';
+import Icon, { type IconName } from './Icon';
+
+function contactIcon(href: string): IconName {
+  if (href.startsWith('mailto:')) return 'mail';
+  if (href.startsWith('https://github.com/')) return 'github';
+  if (href.startsWith('https://www.linkedin.com/')) return 'linkedin';
+  if (href.startsWith('https://www.instagram.com/')) return 'instagram';
+  return 'external';
+}
 
 export default function ProfileSections() {
   // The approval gate applies to every channel in this list, including personal profiles.
@@ -54,11 +63,14 @@ export default function ProfileSections() {
     <section id="contact" className="section contact" tabIndex={-1} aria-labelledby="contact-title">
       <div className="section-label"><span aria-hidden="true">04</span><h2 id="contact-title">Contact</h2></div>
       <div className="contact__content">
-        {profile.contacts.approved && <p className="contact__location">{profile.contacts.location}</p>}
+        {profile.contacts.approved && <p className="contact__location"><Icon name="pin" /><span>{profile.contacts.location}</span></p>}
         {approvedContacts.length ? <ul>{approvedContacts.map(item => {
           const external = item.href.startsWith('https://');
-          return <li key={item.href}><a className="project-action" href={item.href} target={external ? '_blank' : undefined} rel={external ? 'noopener noreferrer' : undefined}>
-            <span className="contact__label">{item.label}</span><span aria-hidden="true">↗</span>
+          const symbol = contactIcon(item.href);
+          const [emailName, emailDomain] = item.label.split('@');
+          return <li key={item.href}><a className="project-action contact-link" href={item.href} target={external ? '_blank' : undefined} rel={external ? 'noopener noreferrer' : undefined}>
+            <span className="contact__symbol" aria-hidden="true"><Icon name={symbol} className={`contact-icon--${symbol}`} /></span>
+            <span className="contact__label">{emailDomain ? <>{emailName}<wbr />@{emailDomain}</> : item.label}</span><Icon name="external" className="contact__arrow" />
             {external && <span className="sr-only"> (opens in a new tab)</span>}
           </a></li>;
         })}</ul> : <p>Contact details are not publicly listed.</p>}

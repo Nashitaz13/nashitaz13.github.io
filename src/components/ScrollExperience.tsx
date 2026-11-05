@@ -40,7 +40,8 @@ export default function ScrollExperience({ scope }: { scope: RefObject<HTMLEleme
       main.querySelectorAll<HTMLElement>('.section-label').forEach(el => group(el, [...el.children, ...(el.nextElementSibling?.matches('p') ? [el.nextElementSibling] : [])]));
       main.querySelectorAll<HTMLElement>('.project-row').forEach(el => group(el,
         [...el.querySelectorAll('.project-row__number,h3,.project-row__content>p,.project-actions'), ...el.parentElement!.querySelectorAll('.case-disclosure>summary')]));
-      main.querySelectorAll<HTMLElement>('.technology-grid,.expertise__category,.about__identity,.about__context,.contact__content').forEach(el => group(el, [...el.children]));
+      main.querySelectorAll<HTMLElement>('.technology-grid,.expertise__category,.about__identity,.about__context,.contact__content').forEach(el => group(el,
+        el.matches('.contact__content') ? [...el.querySelectorAll(':scope>.contact__location,:scope>ul>li')] : [...el.children]));
       main.querySelectorAll<HTMLElement>('.expertise__context>p').forEach(el => group(el, [el]));
       const footer = document.querySelector<HTMLElement>('.site-footer');
       if (footer) group(footer, [...footer.children]);
