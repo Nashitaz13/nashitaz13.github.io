@@ -42,4 +42,8 @@
   --duration-press: 120ms;
   --duration-reveal: 360ms;
   --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+  --color-grid: #91a3ad0a;
+  --color-surface-soft: #101820;
+  --duration-tile: 200ms;
+  --space-tile: .625rem;
 }

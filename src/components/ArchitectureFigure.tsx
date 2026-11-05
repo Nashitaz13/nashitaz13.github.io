@@ -1,6 +1,7 @@
 import type { ProjectPresentation } from '../content/projectEvidence';
+import ArchitectureDialog from './ArchitectureDialog';
 
-export default function ArchitectureFigure({ figure, id }: { figure: ProjectPresentation['figure']; id: string }) {
+export default function ArchitectureFigure({ figure, id, inspectable = true }: { figure: ProjectPresentation['figure']; id: string; inspectable?: boolean }) {
   const height = figure.nodes.length * 104 - 40;
   return (
     <figure className="architecture-figure">
@@ -18,11 +19,12 @@ export default function ArchitectureFigure({ figure, id }: { figure: ProjectPres
             <text x="150" y={i * 104 + 38} textAnchor="middle">{node}</text>
             {figure.edges[i] && <>
               <path d={`M150 ${i * 104 + 60} v44 m-4 -5 l4 5 l4 -5`} />
-              <text className="architecture-figure__edge" x="162" y={i * 104 + 88}>{figure.edges[i]}</text>
+              <text className="architecture-figure__edge" x="158" y={i * 104 + 88}>{figure.edges[i]}</text>
             </>}
           </g>
         ))}
       </svg>
+      {inspectable && <ArchitectureDialog figure={figure} id={id} />}
     </figure>
   );
 }

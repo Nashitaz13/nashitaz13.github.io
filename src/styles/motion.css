@@ -1,6 +1,4 @@
 .hero { position: relative; isolation: isolate; }
-.hero::before { content: ''; position: absolute; inset: 0 -1rem; z-index: -1; pointer-events: none; background: radial-gradient(ellipse at 74% 30%, #b4e18b0c, transparent 60%), linear-gradient(#a3b1bb05 1px, transparent 1px), linear-gradient(90deg,#a3b1bb05 1px,transparent 1px); background-size: auto,48px 48px,48px 48px; mask-image: linear-gradient(black,transparent); }
-.motion-light { position: fixed; top: 0; left: 0; width: 360px; height: 360px; border-radius: 50%; background: radial-gradient(circle,#b4e18b0d,transparent 68%); pointer-events: none; z-index: 2; opacity: 0; contain: strict; }
 .primary-link { position: relative; overflow: hidden; touch-action: manipulation; transition: transform var(--duration-press) var(--ease-out),background-color var(--duration-feedback),color var(--duration-feedback); }
 .primary-link:is(:active,.is-pressed) { transform: scale(.985); }
 .motion-ripple { position: absolute; width: 90px; height: 90px; background: var(--color-on-accent); border-radius: 50%; pointer-events: none; }

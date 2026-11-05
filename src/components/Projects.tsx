@@ -3,6 +3,19 @@ import { projectEvidence, type PresentedProjectId } from '../content/projectEvid
 import type { Claim } from '../content/profile';
 import ArchitectureFigure from './ArchitectureFigure';
 import '../styles/projects.css';
+import useCaseStudies from '../hooks/useCaseStudies';
+import '../styles/disclosures.css';
+import TechnologyStack from './TechnologyStack';
+import Icon, { type IconName } from './Icon';
+
+function sourceKind(href: string): { icon: IconName; label: string } {
+  if (href.includes('/actions/runs/')) return { icon: 'branch', label: 'Workflow run' };
+  if (/test/i.test(href)) return { icon: 'test', label: 'Test source' };
+  if (/\.csv$/.test(href)) return { icon: 'table', label: 'Stored data' };
+  if (/\.(ya?ml|tf)$/.test(href)) return { icon: 'config', label: 'Configuration' };
+  if (/\.(py|ts|js)$/.test(href)) return { icon: 'code', label: 'Implementation' };
+  return { icon: 'file', label: 'Document' };
+}
 
 function ClaimBlock({ title, claims, id, emphasized = false }: { title: string; claims: readonly Claim[]; id: string; emphasized?: boolean }) {
   const published = claims.filter(claim => claim.publish);
@@ -42,38 +55,56 @@ function CaseStudy({ project, number }: { project: Project; number: string }) {
         <aside className="case-study__evidence" aria-label={`${project.title}: architecture and sources`}>
           <ArchitectureFigure figure={figure} id={anchor} />
           <div className="evidence-list">
-            <h4>Inspect the evidence</h4>
+            <div className="evidence-list__bar"><h4>Inspect the evidence</h4><span className="metadata">Source files</span></div>
             <p className="metadata">Pinned source files and historical records. These links establish scope, not current service health.</p>
-            <ul>{evidence.map(link => <li key={link.href}><a className="project-action" href={link.href}>{link.label}<span aria-hidden="true">↗</span></a></li>)}</ul>
+            <ul>{evidence.map(link => {
+              const kind = sourceKind(link.href);
+              return <li key={link.href}><a className="evidence-link" href={link.href} target="_blank" rel="noopener noreferrer">
+                <Icon name={kind.icon} /><span className="evidence-link__text"><span>{link.label}</span><small>{kind.label}</small></span><Icon name="external" className="evidence-link__external" />
+                <span className="sr-only"> (opens in a new tab)</span>
+              </a></li>;
+            })}</ul>
           </div>
         </aside>
       </div>
-      <a className="project-action case-study__return" href="#projects">Back to projects<span aria-hidden="true">↑</span></a>
+      <div className="case-study__actions">
+        <button type="button" className="project-action action--secondary case-study__return" data-case-collapse hidden><Icon name="chevron" />Collapse case study</button>
+        <button type="button" className="project-action action--utility" data-copy-case={anchor} hidden><Icon name="copy" className="copy-icon" /><Icon name="check" className="copied-icon" /><span>Copy case-study link</span></button>
+        <a className="project-action action--back" href={`#project-summary-${project.id}`}><Icon name="up" />Back to project</a>
+        <output className="copy-status" role="status" aria-live="polite" />
+      </div>
     </article>
   );
 }
 
 export default function Projects() {
+  const region = useCaseStudies();
   const published = projects.filter(project => project.summary.publish && project.id in projectEvidence);
   return (
-    <section id="projects" className="section projects" aria-labelledby="projects-title">
+    <section ref={region} id="projects" className="section projects" tabIndex={-1} aria-labelledby="projects-title">
       <div className="section-label"><span aria-hidden="true">01</span><h2 id="projects-title">Projects</h2></div>
       <p className="projects__lead">Team projects, inspected through their implementation, evidence and limits.</p>
       <ol className="project-rows">
-        {published.map((project, i) => <li className="project-row" key={project.id}>
+        {published.map((project, i) => <li className="project-entry" key={project.id}>
+          <div className="project-row" tabIndex={-1} id={`project-summary-${project.id}`}>
           <p className="metadata project-row__number">0{i + 1} / {project.environment}</p>
           <div className="project-row__content">
             <h3><a href={`#${projectEvidence[project.id as PresentedProjectId].anchor}`}>{project.title}</a></h3>
             <p data-claim={project.summary.id}>{project.summary.text}</p>
-            <ul className="project-stack" aria-label="Project technology coverage">{project.stack.map(tool => <li key={tool}>{tool}</li>)}</ul>
+            <TechnologyStack tools={project.stack} label="Project technology coverage" />
             <div className="project-actions">
-              <a className="project-action" href={`#${projectEvidence[project.id as PresentedProjectId].anchor}`} aria-label={`Explore case study: ${project.title}`}>Explore case study<span aria-hidden="true">↘</span></a>
-              {project.links.map(link => <a className="project-action project-action--muted" href={link.href} key={link.href} aria-label={`${project.title}: ${link.label}`}>{link.label}<span aria-hidden="true">↗</span></a>)}
+              {project.links.map(link => <a className="project-action action--source" href={link.href} target="_blank" rel="noopener noreferrer" key={link.href} aria-label={`${project.title}: ${link.label} (opens in a new tab)`}><Icon name="branch" />{link.label}<Icon name="external" /></a>)}
             </div>
           </div>
+          </div>
+          <details className="case-disclosure" name="portfolio-case-studies">
+            <summary className="project-action" aria-label={`Case study: ${project.title}`}>
+              <span className="case-disclosure__closed">Explore case study</span><span className="case-disclosure__open">Collapse case study</span><span className="case-disclosure__icon" aria-hidden="true">+</span>
+            </summary>
+            <CaseStudy project={project} number={`0${i + 1}`} />
+          </details>
         </li>)}
       </ol>
-      <div className="case-studies">{published.map((project, i) => <CaseStudy key={project.id} project={project} number={`0${i + 1}`} />)}</div>
     </section>
   );
 }

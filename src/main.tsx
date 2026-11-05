@@ -3,6 +3,8 @@ import { createRoot, hydrateRoot } from 'react-dom/client';
 import App from './App';
 import './styles/tokens.css';
 import './styles/global.css';
+import './styles/workstation.css';
+import './styles/scroll-experience.css';
 
 const root = document.getElementById('root');
 if (!root) throw new Error('Portfolio root element is missing.');

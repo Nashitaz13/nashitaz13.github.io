@@ -19,12 +19,13 @@ export default function useActiveSection() {
     let frame = 0;
     let anchor = hashSection(window.location.hash);
     let anchorY: number | null = null;
+    let navigating = false;
     // A midpoint also lets short closing sections become current before reaching the footer.
     const readingLine = () => Math.round(window.innerHeight * .5);
 
     function update() {
       // Keep an explicit anchor selected until the visitor actually changes scroll position.
-      if (anchor && (anchorY === null || Math.abs(window.scrollY - anchorY) < 1)) {
+      if (anchor && (navigating || anchorY === null || Math.abs(window.scrollY - anchorY) < 1)) {
         setCurrent(anchor);
         return;
       }
@@ -42,6 +43,12 @@ export default function useActiveSection() {
       frame = requestAnimationFrame(() => { anchorY = window.scrollY; update(); });
     }
     const onHashChange = () => anchorIntent(window.location.hash);
+    const navigation = (event: Event) => {
+      const { phase, hash } = (event as CustomEvent<{phase: string; hash: string}>).detail;
+      navigating = phase === 'start';
+      if (phase === 'start') anchorIntent(hash);
+      else { anchor = phase === 'end' ? hashSection(hash) : undefined; anchorY = window.scrollY; update(); }
+    };
     function onAnchorClick(event: MouseEvent) {
       if (event.defaultPrevented || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
       const link = event.target instanceof Element ? event.target.closest<HTMLAnchorElement>('a[href^="#"]') : null;
@@ -60,6 +67,7 @@ export default function useActiveSection() {
       update();
     }
     window.addEventListener('hashchange', onHashChange);
+    window.addEventListener('portfolio-scroll', navigation);
     document.addEventListener('click', onAnchorClick);
     window.addEventListener('resize', observe);
     observe();
@@ -67,6 +75,7 @@ export default function useActiveSection() {
     return () => {
       observer?.disconnect(); footerObserver?.disconnect(); cancelAnimationFrame(frame);
       window.removeEventListener('hashchange', onHashChange);
+      window.removeEventListener('portfolio-scroll', navigation);
       document.removeEventListener('click', onAnchorClick);
       window.removeEventListener('resize', observe);
     };

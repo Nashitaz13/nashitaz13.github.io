@@ -1,6 +1,7 @@
-import { useRef } from 'react';
+import { useEffect, useRef } from 'react';
 import { profile } from '../content/profile';
 import useActiveSection from '../hooks/useActiveSection';
+import { headerOffset } from '../motion/gsap';
 
 const sections = [
   ['intro', 'Intro'],
@@ -12,7 +13,20 @@ const sections = [
 
 export default function Header() {
   const menu = useRef<HTMLDetailsElement>(null);
+  const header = useRef<HTMLElement>(null);
+  const sentinel = useRef<HTMLDivElement>(null);
   const currentSection = useActiveSection();
+  useEffect(() => {
+    const element = header.current;
+    if (!element) return;
+    const root = document.documentElement;
+    const previous = root.style.getPropertyValue('--header-offset');
+    const measure = () => root.style.setProperty('--header-offset', `${headerOffset()}px`);
+    const resize = new ResizeObserver(measure); resize.observe(element); measure();
+    const stuck = new IntersectionObserver(([entry]) => { element.classList.toggle('is-stuck', !entry?.isIntersecting); });
+    if (sentinel.current) stuck.observe(sentinel.current);
+    return () => { resize.disconnect(); stuck.disconnect(); if (previous) root.style.setProperty('--header-offset',previous); else root.style.removeProperty('--header-offset'); };
+  }, []);
 
   function closeMenu() {
     if (menu.current) menu.current.open = false;
@@ -25,7 +39,7 @@ export default function Header() {
   ));
 
   return (
-    <header className="site-header">
+    <><div ref={sentinel} className="header-sentinel" aria-hidden="true" /><header ref={header} className="site-header">
       <div className="container header-bar">
         <a className="brand" href="#intro" aria-label={`${profile.name.text}, introduction`}>
           <span className="brand-mark" aria-hidden="true">bt<span>_</span></span>
@@ -42,6 +56,7 @@ export default function Header() {
           <nav className="section-nav" aria-label="Mobile navigation">{links}</nav>
         </details>
       </div>
-    </header>
+      <div className="reading-progress" aria-hidden="true"><span /></div>
+    </header></>
   );
 }
