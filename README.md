@@ -50,11 +50,17 @@ npm run build
 npm run check:foundation
 npm run check:hero
 npm run check:projects
+npm run check:profile
+npm run check:ux
 ```
 
 The checks use Node built-ins and an installed Chrome/Chromium or Edge. Set `CHROME_PATH` when the browser is not detected automatically. Node must support native TypeScript type stripping for the content-check imports (tested with Node 24).
 
 Browser checks start temporary dev/production servers on ports 5175/4180, launch their own headless browser and stop those processes afterward. Results and screenshots go into ignored local folders under `docs/validation`. Hero/Projects checks cover six widths from 320px to 1440px, keyboard navigation, focus, hash destinations, wrapping, reduced motion and bundle boundaries. Projects additionally checks refresh/history, source-link wiring and figure accessibility metadata.
+
+`check:profile` includes those regression checks and validates the Expertise, About/Education and Contact sections: published text, project technology coverage, links to case studies, readable body text and contact approval boundaries. It saves screenshots/results under `docs/validation/phase06`.
+
+`check:ux` includes the content/browser regressions plus scroll-based selection without URL changes, section boundaries, explicit/same-hash navigation, hover/focus feedback, native menu Space/Escape and reduced-motion checks. Screenshots/results go to `docs/validation/phase07`. Its 200% reflow check uses half-sized CSS viewports at doubled pixel density; it does not operate Chrome's native zoom control.
 
 An internal evidence audit is deliberately excluded from Git. When present locally, the content check resolves source IDs against it. Public clones validate source-ID format/presence and other content invariants, and explicitly report the internal registry lookup as skipped. HTTP reachability of external source links is a separate check; these scripts do not promise that a repository or service remains available.
 
