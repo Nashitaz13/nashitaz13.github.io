@@ -26,6 +26,7 @@ section, main { scroll-margin-top: var(--space-6); }
 .section-nav { display: flex; gap: var(--space-1); }
 .section-nav a { display: flex; align-items: center; gap: var(--space-2); min-height: 44px; padding: var(--space-2) var(--space-3); font-size: var(--text-metadata); color: var(--color-muted); border-radius: var(--radius-small); }
 .section-nav a:hover { background: var(--color-raised); color: var(--color-text); }
+.section-nav a { transition-duration: var(--duration-navigation); }
 .section-nav a[aria-current="location"] { background: var(--color-raised); color: var(--color-accent); text-decoration: underline; text-underline-offset: 6px; }
 .nav-index { font-family: var(--font-mono); }
 .mobile-menu { display: none; }

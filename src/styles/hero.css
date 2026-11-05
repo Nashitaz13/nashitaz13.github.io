@@ -27,6 +27,7 @@
   border: 1px solid var(--color-terminal-border);
   border-radius: var(--radius-panel);
   background: var(--color-surface);
+  transition: border-color var(--duration-navigation) ease-out;
 }
 .profile-terminal__titlebar {
   display: flex;
@@ -38,6 +39,7 @@
   background: var(--color-terminal-titlebar);
   font: var(--text-metadata)/1.6 var(--font-mono);
   color: var(--color-muted);
+  transition: background-color var(--duration-navigation) ease-out;
 }
 .profile-terminal__indicator { color: var(--color-accent); font-size: 1rem; }
 .profile-terminal__mode { margin-left: auto; }
@@ -54,6 +56,11 @@
 .profile-terminal__comment { color: var(--color-muted); }
 .profile-terminal__group { color: var(--color-text); }
 .profile-terminal__value { color: var(--color-accent); }
+
+@media (hover: hover) and (pointer: fine) {
+  .profile-terminal:hover { border-color: var(--color-accent); }
+  .profile-terminal:hover .profile-terminal__titlebar { background: var(--color-raised); }
+}
 
 @media (max-width: 950px) {
   .hero { grid-template-columns: minmax(0, 1fr); gap: var(--space-10); padding-block: var(--space-12); }

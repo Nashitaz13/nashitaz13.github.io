@@ -38,4 +38,5 @@
   --color-terminal-border: #526546;
   --focus-width: 2px;
   --duration-feedback: 150ms;
+  --duration-navigation: 180ms;
 }

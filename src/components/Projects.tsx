@@ -4,10 +4,10 @@ import type { Claim } from '../content/profile';
 import ArchitectureFigure from './ArchitectureFigure';
 import '../styles/projects.css';
 
-function ClaimBlock({ title, claims, id }: { title: string; claims: readonly Claim[]; id: string }) {
+function ClaimBlock({ title, claims, id, emphasized = false }: { title: string; claims: readonly Claim[]; id: string; emphasized?: boolean }) {
   const published = claims.filter(claim => claim.publish);
   if (!published.length) return null;
-  return <section className="case-study__block" aria-labelledby={id}>
+  return <section className={`case-study__block${emphasized ? ' case-study__block--bounded' : ''}`} aria-labelledby={id}>
     <h4 id={id}>{title}</h4>
     <div>{published.map(claim => <p key={claim.id} data-claim={claim.id}>{claim.text}</p>)}</div>
   </section>;
@@ -36,7 +36,7 @@ function CaseStudy({ project, number }: { project: Project; number: string }) {
           <ClaimBlock title="Implementation" claims={[study.implementation]} id={`${anchor}-implementation`} />
           <ClaimBlock title="My contribution" claims={contributions} id={`${anchor}-contribution`} />
           <ClaimBlock title="Testing & evidence" claims={[study.testing]} id={`${anchor}-testing`} />
-          <ClaimBlock title="Results & limitations" claims={[study.results, study.limitations]} id={`${anchor}-results`} />
+          <ClaimBlock title="Results & limitations" claims={[study.results, study.limitations]} id={`${anchor}-results`} emphasized />
           <ClaimBlock title="Trade-offs & engineering takeaways" claims={[study.tradeoff, study.takeaway]} id={`${anchor}-takeaway`} />
         </div>
         <aside className="case-study__evidence" aria-label={`${project.title}: architecture and sources`}>
