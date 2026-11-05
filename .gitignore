@@ -1,0 +1,17 @@
+node_modules/
+dist/
+.env
+.env.*
+*.local
+*.log
+
+# Keep original/private references and local review output out of a future push.
+/Bui_Ngoc_Thai_Resume.pdf
+/prompt.md
+/DevOps_Portfolio_Step_by_Step_Prompts.md
+/docs/CONTENT_AUDIT.md
+/docs/validation/
+/design/
+
+# Internal planning, provenance and local QA records stay on the owner's machine.
+/docs/
