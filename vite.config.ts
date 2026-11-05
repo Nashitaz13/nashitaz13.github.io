@@ -17,5 +17,5 @@ export default defineConfig({
     },
   },
   preview: { host: '127.0.0.1', port: 4174, strictPort: true },
-  build: { sourcemap: false },
+  build: { sourcemap: false, manifest: true },
 });

@@ -16,6 +16,8 @@
     "check:motion": "node scripts/check-projects-content.mjs && node scripts/check-foundation.mjs --motion"
   },
   "dependencies": {
+    "@gsap/react": "2.1.2",
+    "gsap": "3.15.1",
     "react": "^19.3.1",
     "react-dom": "^19.3.1"
   },
