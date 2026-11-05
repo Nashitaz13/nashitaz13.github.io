@@ -7,7 +7,7 @@ function hashSection(hash: string) {
 }
 
 export default function useActiveSection() {
-  const [current, setCurrent] = useState<string>(() => hashSection(window.location.hash) ?? 'intro');
+  const [current, setCurrent] = useState<string>('intro');
 
   useEffect(() => {
     const sections = sectionIds.flatMap(id => {
