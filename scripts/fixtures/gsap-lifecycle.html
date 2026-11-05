@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Local lifecycle fixture</title>
+<script>
+// Test-only: count global listeners by identity, without altering their native behavior.
+const listeners = new Map();
+const add = EventTarget.prototype.addEventListener, remove = EventTarget.prototype.removeEventListener;
+const watched = target => target === window || target === document || target === document.documentElement;
+const capture = options => typeof options === 'boolean' ? options : !!options?.capture;
+EventTarget.prototype.addEventListener = function(type, listener, options) {
+  if (watched(this)) { let list = listeners.get(this); if (!list) listeners.set(this, list=[]); if (!list.some(e=>e.type===type&&e.listener===listener&&e.capture===capture(options))) list.push({type,listener,capture:capture(options)}); }
+  return add.call(this,type,listener,options);
+};
+EventTarget.prototype.removeEventListener = function(type, listener, options) {
+  const list = listeners.get(this); if(list) listeners.set(this,list.filter(e=>!(e.type===type&&e.listener===listener&&e.capture===capture(options))));
+  return remove.call(this,type,listener,options);
+};
+window.listenerCounts = () => [...listeners.values()].flat().reduce((counts,e)=>{counts[e.type]=(counts[e.type]||0)+1;return counts;},{});
+</script></head><body><div id="root"></div><script type="module">
+import React from 'react';
+import { createRoot } from 'react-dom/client';
+import App from '/src/App.tsx';
+import { gsap, ScrollTrigger } from '/src/motion/gsap.ts';
+import '/src/styles/tokens.css';
+import '/src/styles/global.css';
+import '/src/styles/workstation.css';
+import '/src/styles/scroll-experience.css';
+let root;
+window.lifecycle = {
+  mount() { root = createRoot(document.querySelector('#root'));root.render(React.createElement(React.StrictMode,null,React.createElement(App))); },
+  unmount() { root?.unmount(); },
+  stats() { return { triggers:ScrollTrigger.getAll().length, active:gsap.globalTimeline.getChildren(true,true,true).filter(t=>t.isActive()).length, listeners:window.listenerCounts() }; },
+};
+</script></body></html>

@@ -13,7 +13,10 @@
     "check:projects": "node scripts/check-projects-content.mjs && node scripts/check-foundation.mjs --projects",
     "check:profile": "node scripts/check-projects-content.mjs && node scripts/check-foundation.mjs --profile",
     "check:ux": "node scripts/check-projects-content.mjs && node scripts/check-foundation.mjs --ux",
-    "check:motion": "node scripts/check-projects-content.mjs && node scripts/check-foundation.mjs --motion"
+    "check:motion": "node scripts/check-projects-content.mjs && node scripts/check-foundation.mjs --motion",
+    "check:inline": "node scripts/check-projects-content.mjs && node scripts/check-foundation.mjs --inline",
+    "check:gsap": "node scripts/check-projects-content.mjs && node scripts/check-foundation.mjs --gsap",
+    "check:scroll": "node scripts/check-projects-content.mjs && node scripts/check-foundation.mjs --immersive"
   },
   "dependencies": {
     "@gsap/react": "2.1.2",
