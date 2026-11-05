@@ -189,6 +189,10 @@ try {
       assert.ok(await evaluate(`[...document.querySelectorAll('#contact a[href^="https:"]')].every(a=>a.target==='_blank'&&a.relList.contains('noopener')&&a.relList.contains('noreferrer'))`));
       assert.equal(await evaluate(`document.querySelectorAll('a[href^="tel:"],a[href*="facebook.com"],a[download]').length`),0);
       assert.equal(verifiedProfile.currentRole.status,'owner-confirmed');
+      assert.deepEqual(await evaluate(`[...document.querySelectorAll('#contact .contact__symbol>.ui-icon')].map(el=>[...el.classList].find(c=>c.startsWith('contact-icon--')))`),['contact-icon--mail','contact-icon--github','contact-icon--linkedin','contact-icon--instagram']);
+      assert.equal(await evaluate(`document.querySelectorAll('#contact .contact__symbol[aria-hidden="true"] svg').length`),4);
+      assert.equal(await evaluate(`document.querySelectorAll('#contact .contact__symbol[tabindex],#contact button').length`),0);
+
       assert.ok(!/GPA|certified|years of experience|graduat|available for|2027/i.test(content.about));
       row.profile = {categories:content.categories,claims:content.claims.length,caseLinks:content.targets.length,minBody:content.minBody,contact:'PASS: four owner-approved channels, no phone/Facebook/resume'};
       for (const selector of ['#expertise','#about','#contact']) {
@@ -311,6 +315,19 @@ try {
       assert.equal(await evaluate(`document.querySelector('.mobile-menu a[aria-current="location"]').hash`),'#'+id);
       assert.ok(await evaluate(`document.querySelector('#${id}').getBoundingClientRect().top<innerHeight`));
     }
+  }
+  if (profileMode) {
+    await tab('Emulation.setDeviceMetricsOverride',{width:1440,height:900,deviceScaleFactor:1,mobile:false});
+    await tab('Emulation.setEmulatedMedia',{features:[]});await navigate('http://127.0.0.1:4180/#contact');await sleep(900);
+    const badge=await evaluate(`(()=>{const r=document.querySelector('#contact .contact__symbol').getBoundingClientRect();return{x:r.x+r.width/2,y:r.y+r.height/2}})()`);
+    await tab('Input.dispatchMouseEvent',{type:'mouseMoved',...badge});await sleep(220);
+    assert.notEqual(await evaluate(`getComputedStyle(document.querySelector('#contact .contact__symbol')).transform`),'none');
+    const shot=await tab('Page.captureScreenshot',{format:'png',captureBeyondViewport:false});writeFileSync(join(output,'contact-icon-hover.png'),Buffer.from(shot.data,'base64'));
+    await evaluate(`document.querySelector('#contact a').focus()`);await key('Tab');assert.equal(await evaluate(`getComputedStyle(document.activeElement).outlineStyle`),'solid');
+    await tab('Emulation.setEmulatedMedia',{features:[{name:'prefers-reduced-motion',value:'reduce'}]});
+    assert.equal(await evaluate(`getComputedStyle(document.querySelector('#contact .contact__symbol')).transform`),'none');
+    assert.equal(await evaluate(`getComputedStyle(document.querySelector('#contact .contact__symbol')).transitionDuration`),'0s');
+    report.contactIcons='PASS: four local SVG icons, no added tab stops, native links, hover movement, keyboard outline and reduced-motion fallback';
   }
   if (uxMode) {
     const selected = () => evaluate(`document.querySelector('.desktop-nav a[aria-current="location"]').hash`);
