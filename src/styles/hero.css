@@ -1,0 +1,71 @@
+.hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr);
+  align-items: center;
+  gap: clamp(2rem, 4vw, 4rem);
+  padding-block: var(--space-16) var(--space-12);
+}
+.hero__identity { min-width: 0; }
+.hero .eyebrow { max-width: 48ch; margin-bottom: var(--space-6); }
+.hero__name {
+  font-size: var(--text-hero);
+  line-height: 1.04;
+  letter-spacing: -0.055em;
+}
+.hero__name > span { display: block; }
+.hero__period { color: var(--color-accent); }
+.hero__intro {
+  max-width: 43ch;
+  margin-top: var(--space-6);
+  font-size: var(--text-lead);
+  color: var(--color-muted);
+}
+.hero .primary-link { margin-top: var(--space-8); }
+.profile-terminal {
+  min-width: 0;
+  width: 100%;
+  border: 1px solid var(--color-terminal-border);
+  border-radius: var(--radius-panel);
+  background: var(--color-surface);
+}
+.profile-terminal__titlebar {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-5);
+  border-bottom: 1px solid var(--color-border);
+  border-radius: 5px 5px 0 0;
+  background: var(--color-terminal-titlebar);
+  font: var(--text-metadata)/1.6 var(--font-mono);
+  color: var(--color-muted);
+}
+.profile-terminal__indicator { color: var(--color-accent); font-size: 1rem; }
+.profile-terminal__mode { margin-left: auto; }
+.profile-terminal__code {
+  margin: 0;
+  padding: var(--space-6);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  font: var(--text-metadata)/1.85 var(--font-mono);
+  color: var(--color-text);
+  tab-size: 2;
+}
+.profile-terminal__code code { font: inherit; }
+.profile-terminal__comment { color: var(--color-muted); }
+.profile-terminal__group { color: var(--color-text); }
+.profile-terminal__value { color: var(--color-accent); }
+
+@media (max-width: 950px) {
+  .hero { grid-template-columns: minmax(0, 1fr); gap: var(--space-10); padding-block: var(--space-12); }
+  .hero__identity { max-width: 44rem; }
+  .hero__intro { max-width: 48ch; }
+}
+@media (max-width: 600px) {
+  .hero { gap: var(--space-8); padding-block: var(--space-10); }
+  .hero__name { font-size: clamp(3.25rem, 15vw, 4.5rem); }
+  .hero .eyebrow { max-width: 36ch; margin-bottom: var(--space-5); }
+  .hero__intro { margin-top: var(--space-5); font-size: var(--text-body); }
+  .hero .primary-link { margin-top: var(--space-6); }
+  .profile-terminal__titlebar { padding-inline: var(--space-4); gap: var(--space-2); }
+  .profile-terminal__code { padding: var(--space-5) var(--space-4); line-height: 1.8; }
+}

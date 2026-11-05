@@ -1,0 +1,54 @@
+.projects__lead { max-width: 60ch; margin-bottom: var(--space-10); color: var(--color-muted); }
+.project-rows { list-style: none; padding: 0; margin: 0; }
+.project-row { display: grid; grid-template-columns: minmax(12rem, .7fr) minmax(0, 1.3fr); gap: var(--space-8); border-top: 1px solid var(--color-border); padding-block: var(--space-8); }
+.project-row__number { padding-top: var(--space-1); }
+.project-row__content { min-width: 0; }
+.project-row h3 { font: 500 clamp(1.5rem, 2.4vw, 2rem)/1.25 var(--font-display); letter-spacing: -.025em; }
+.project-row h3 a { display: inline-block; padding-block: var(--space-2); }
+.project-row__content > p { max-width: 67ch; margin-block: var(--space-4) var(--space-5); color: var(--color-muted); }
+.project-stack { display: flex; flex-wrap: wrap; gap: var(--space-2) var(--space-4); font: var(--text-metadata)/1.8 var(--font-mono); color: var(--color-muted); }
+.project-stack li { border-bottom: 1px solid var(--color-border); }
+.project-actions { display: flex; flex-wrap: wrap; gap: var(--space-2) var(--space-8); margin-top: var(--space-5); }
+.project-action { display: inline-flex; align-items: center; justify-content: space-between; gap: var(--space-4); min-height: 44px; padding-block: var(--space-2); color: var(--color-accent); text-decoration: underline; text-underline-offset: 5px; text-decoration-thickness: 1px; }
+.project-action:hover { color: var(--color-text); }
+.project-action--muted { color: var(--color-muted); }
+.project-action > span { flex-shrink: 0; }
+.case-studies { margin-top: var(--space-12); }
+.case-study { padding-block: var(--space-16); border-top: 1px solid var(--color-border); scroll-margin-top: var(--space-6); }
+.case-study:focus { outline: none; }
+.case-study:focus-visible { outline: 2px solid var(--color-focus); outline-offset: 6px; }
+.case-study__header { max-width: 56rem; margin-bottom: var(--space-10); }
+.case-study__header h3 { font: 500 clamp(1.75rem, 3.5vw, 3rem)/1.15 var(--font-display); letter-spacing: -.03em; margin-block: var(--space-4); }
+.case-study__meta { display: flex; flex-wrap: wrap; gap: var(--space-2) var(--space-6); font: var(--text-metadata)/1.8 var(--font-mono); color: var(--color-muted); }
+.case-study__layout { display: grid; grid-template-columns: minmax(0, 1.45fr) minmax(0, 1fr); gap: clamp(2rem, 5vw, 5rem); }
+.case-study__narrative, .case-study__evidence { min-width: 0; }
+.case-study__block + .case-study__block { margin-top: var(--space-8); }
+.case-study h4 { font-size: var(--text-body); line-height: 1.5; font-weight: 600; margin: 0 0 var(--space-3); }
+.case-study__block p { max-width: 65ch; color: var(--color-muted); }
+.case-study__block p + p { margin-top: var(--space-4); }
+.architecture-figure { margin: 0; }
+.architecture-figure figcaption { display: grid; gap: var(--space-3); color: var(--color-muted); font-size: var(--text-body); }
+.architecture-figure figcaption strong { color: var(--color-text); font-weight: 600; }
+.architecture-figure svg { width: min(100%, 360px); height: auto; margin: var(--space-6) auto var(--space-8); overflow: visible; }
+.architecture-figure rect { fill: var(--color-surface); stroke: var(--color-border); }
+.architecture-figure text { fill: var(--color-text); font: 16px var(--font-body); }
+.architecture-figure path { stroke: var(--color-accent); stroke-width: 1.5; fill: none; }
+.architecture-figure .architecture-figure__edge { fill: var(--color-muted); font-size: 15px; }
+.evidence-list { padding-top: var(--space-6); border-top: 1px solid var(--color-border); }
+.evidence-list ul { margin-top: var(--space-4); }
+.evidence-list li + li { border-top: 1px solid var(--color-border); }
+.evidence-list .project-action { width: 100%; font-size: var(--text-body); }
+.case-study__return { margin-top: var(--space-8); }
+@media (max-width: 900px) {
+  .project-row, .case-study__layout { grid-template-columns: minmax(0, 1fr); gap: var(--space-5); }
+  .case-study__evidence { margin-top: var(--space-8); }
+  .architecture-figure { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: var(--space-6); align-items: center; }
+  .architecture-figure svg { margin-block: 0 var(--space-6); }
+}
+@media (max-width: 600px) {
+  .case-study { padding-block: var(--space-10); }
+  .case-study__header { margin-bottom: var(--space-8); }
+  .architecture-figure { display: block; }
+  .architecture-figure svg { margin-block: var(--space-6); }
+  .project-row { gap: var(--space-3); }
+}
