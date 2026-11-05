@@ -82,7 +82,11 @@ Internal plans/audits, original references, QA screenshots, environment files an
 
 The intended GitHub Pages repository is `nashitaz13/nashitaz13.github.io`; Vite uses `base: '/'`. Assets are local imports rewritten by the build. `publicDir: false` prevents automatic copying of loose source documents. Local development denies private document/reference paths, and production source maps are disabled.
 
-Only `dist` is the deployable artifact. No GitHub Actions deployment is configured. Search indexing remains disabled while the website is under construction. Pushing this repository is separate from configuring or publishing GitHub Pages.
+The live site is https://nashitaz13.github.io/. In repository Settings → Pages, Source must be **GitHub Actions**.
+
+`.github/workflows/deploy.yml` deploys pushes to `main` and supports **Actions → Deploy portfolio to GitHub Pages → Run workflow**. Build uses Node 24, `npm ci`, content checks, strict TypeScript/Vite/prerender and `npm run check:build`. A separate deployment job publishes only `dist` with Pages/OIDC permissions. Official action versions are pinned by commit SHA; deployments are serialized. No personal access token or cloud secret is required.
+
+`check:build` rejects unexpected files, development references and unapproved emails, and verifies static case studies and local assets before upload. The original CV, audit and review output are not deployment inputs. Check both jobs in Actions and the live site after a push. Search indexing remains disabled while the portfolio is under construction.
 
 
 ## GSAP visual system
