@@ -1,24 +1,20 @@
+import type { ReactNode } from 'react';
 import { profile } from '../content/profile';
 
 export default function ProfileTerminal() {
-  return (
-    <aside className="profile-terminal" aria-labelledby="terminal-title">
-      <div className="profile-terminal__titlebar">
-        <span className="profile-terminal__indicator" aria-hidden="true">›_</span>
-        <span id="terminal-title">profile.toml</span>
-        <span className="profile-terminal__mode">Read only</span>
-      </div>
-      <pre className="profile-terminal__code"><code>
-        <span className="profile-terminal__comment"># identity / static profile</span>{'\n\n'}
-        <span className="profile-terminal__group">[profile]</span>{'\n'}
-        {profile.name.publish && <>{'name = '}<span className="profile-terminal__value">{JSON.stringify(profile.name.text)}</span>{'\n'}</>}
-        {profile.positioning.publish && <>{'target = '}<span className="profile-terminal__value">{JSON.stringify(profile.positioning.text)}</span>{'\n'}</>}
-        {'\n'}<span className="profile-terminal__group">[project_coverage]</span>{'\nareas = [\n'}
-        {profile.expertise.filter(item => item.publish).map(item => (
-          <span key={item.id}>{'  '}<span className="profile-terminal__value">{JSON.stringify(item.category)}</span>{',\n'}</span>
-        ))}
-        {']'}
-      </code></pre>
-    </aside>
-  );
+  const value = (text: string) => <span className="profile-terminal__value">{JSON.stringify(text)}</span>;
+  const group = (text: string) => <span className="profile-terminal__group">{text}</span>;
+  const lines: { content: ReactNode; typed?: boolean }[] = [
+    {content: <span className="profile-terminal__comment"># identity / static profile</span>},
+    {content: ''}, {content: group('[profile]')},
+    ...(profile.name.publish ? [{content: <>name = {value(profile.name.text)}</>, typed: true}] : []),
+    ...(profile.positioning.publish ? [{content: <>target = {value(profile.positioning.text)}</>, typed: true}] : []),
+    {content: ''}, {content: group('[project_coverage]')}, {content: 'areas = ['},
+    ...profile.expertise.filter(item => item.publish).map(item => ({content: <>{'  '}{value(item.category)},</>})),
+    {content: ']'},
+  ];
+  return <aside className="profile-terminal" aria-labelledby="terminal-title">
+    <div className="profile-terminal__titlebar"><span className="profile-terminal__indicator" aria-hidden="true">›_</span><span id="terminal-title">profile.toml</span><span className="profile-terminal__mode">Read only</span></div>
+    <pre className="profile-terminal__code"><code>{lines.map((line,index) => <span className="terminal-line" data-type-key={line.typed ? '' : undefined} key={index}><span className="terminal-line__ink">{line.content}{index < lines.length-1 ? '\n' : ''}</span></span>)}</code></pre>
+  </aside>;
 }

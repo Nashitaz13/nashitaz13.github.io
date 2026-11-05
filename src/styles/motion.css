@@ -1,0 +1,30 @@
+.hero { position: relative; isolation: isolate; }
+.hero::before { content: ''; position: absolute; inset: 0 -1rem; z-index: -1; pointer-events: none; background: radial-gradient(ellipse at 74% 30%, #b4e18b0c, transparent 60%), linear-gradient(#a3b1bb05 1px, transparent 1px), linear-gradient(90deg,#a3b1bb05 1px,transparent 1px); background-size: auto,48px 48px,48px 48px; mask-image: linear-gradient(black,transparent); }
+.motion-light { position: fixed; top: 0; left: 0; width: 360px; height: 360px; border-radius: 50%; background: radial-gradient(circle,#b4e18b0d,transparent 68%); pointer-events: none; z-index: 2; opacity: 0; contain: strict; }
+.primary-link { position: relative; overflow: hidden; touch-action: manipulation; transition: transform var(--duration-press) var(--ease-out),background-color var(--duration-feedback),color var(--duration-feedback); }
+.primary-link:is(:active,.is-pressed) { transform: scale(.985); }
+.motion-ripple { position: absolute; width: 90px; height: 90px; background: var(--color-on-accent); border-radius: 50%; pointer-events: none; }
+.profile-terminal__code { white-space: normal; }
+.terminal-line { display: block; position: relative; min-height: 1.85em; white-space: pre-wrap; overflow-wrap: anywhere; }
+.terminal-line__ink { display: block; }
+.terminal-line.is-typing::before { content: ''; position: absolute; top: .3em; left: -10px; width: 2px; height: 1em; background: var(--color-accent); }
+.section-nav a { position: relative; }
+.section-nav a::after { content: ''; position: absolute; left: 12px; right: 12px; bottom: 5px; height: 1px; background: var(--color-accent); transform: scaleX(0); transform-origin: left; transition: transform var(--duration-navigation) var(--ease-out); }
+.section-nav a[aria-current]::after { transform: scaleX(1); }
+.section-nav a[aria-current] { text-decoration: none; }
+.project-row:focus-within .project-actions .project-action:first-child { color: var(--color-text); text-decoration-thickness: 2px; }
+.project-row:focus-within .project-stack { color: var(--color-text); }
+.architecture-figure g rect, .architecture-figure g text, .architecture-figure g path { transition: stroke var(--duration-navigation),fill var(--duration-navigation); }
+.case-study:focus-within .architecture-figure g rect { stroke: var(--color-terminal-border); }
+@media (hover: hover) and (pointer: fine) {
+  .project-row:hover .project-stack { color: var(--color-text); }
+  .project-row:hover .project-actions .project-action:first-child { color: var(--color-text); text-decoration-thickness: 2px; }
+  .architecture-figure g:hover rect { stroke: var(--color-accent); fill: var(--color-raised); }
+  .architecture-figure g:hover text { fill: var(--color-accent); }
+  .architecture-figure g:hover path { stroke: var(--color-text); }
+}
+@media (pointer: coarse), (prefers-reduced-motion: reduce) { .motion-light { display: none; } }
+@media (prefers-reduced-motion: reduce) {
+  .primary-link:is(:active,.is-pressed) { transform: none; }
+  .terminal-line.is-typing::before { display: none; }
+}
