@@ -9,9 +9,11 @@ import { projectEvidence } from '../src/content/projectEvidence.ts';
 
 // Native-browser integration checks, with no test-runner package or product dependency.
 const root = resolve(import.meta.dirname, '..');
-const projectsMode = process.argv.includes('--projects');
+const uxMode = process.argv.includes('--ux');
+const profileMode = uxMode || process.argv.includes('--profile');
+const projectsMode = profileMode || process.argv.includes('--projects');
 const heroMode = projectsMode || process.argv.includes('--hero');
-const output = join(root, projectsMode ? 'docs/validation/phase05' : heroMode ? 'docs/validation/phase04' : 'docs/validation/phase03');
+const output = join(root, uxMode ? 'docs/validation/phase07' : profileMode ? 'docs/validation/phase06' : projectsMode ? 'docs/validation/phase05' : heroMode ? 'docs/validation/phase04' : 'docs/validation/phase03');
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 const chromePath = [process.env.CHROME_PATH, 'C:/Program Files/Google/Chrome/Application/chrome.exe', 'C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe', '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome', '/usr/bin/google-chrome', '/usr/bin/chromium'].find(p => p && existsSync(p));
 assert.ok(chromePath, 'Set CHROME_PATH to an installed Chrome/Chromium browser.');
@@ -129,6 +131,43 @@ try {
       row.hero = { ...hero, code: undefined, fullTextSelection: 'PASS' };
     }
     report.views.push(row);
+    if (profileMode) {
+      const content = await evaluate(`(() => ({
+        categories:[...document.querySelectorAll('.expertise__category h3')].map(el=>el.textContent),
+        claims:[...document.querySelectorAll('#expertise [data-claim],#about [data-claim]')].map(el=>({id:el.dataset.claim,text:el.textContent})),
+        technologies:[...document.querySelectorAll('.expertise__context .project-stack')].map(el=>[...el.children].map(item=>item.textContent)),
+        targets:[...document.querySelectorAll('.expertise__examples a')].map(el=>el.hash),
+        about:document.querySelector('#about').innerText,
+        contact:{text:document.querySelector('.contact__content').textContent,links:document.querySelectorAll('#contact a').length,forms:document.querySelectorAll('#contact form,input,textarea').length},
+        forbidden:document.querySelectorAll('#expertise progress,#expertise meter,#about time,a[download],a[href^="mailto:"],a[href^="tel:"],a[href$=".pdf"]').length,
+        minBody:Math.min(...[...document.querySelectorAll('.expertise__context>p,.about__content p:not(.metadata),.contact__content p')].map(el=>parseFloat(getComputedStyle(el).fontSize)))
+      }))()`);
+      const published = verifiedProfile.expertise.filter(c=>c.publish);
+      assert.deepEqual(content.categories, published.map(c=>c.category));
+      assert.deepEqual(content.technologies, published.map(c=>c.technologies));
+      assert.deepEqual(content.targets, published.flatMap(c=>c.projectIds.map(id=>'#'+projectEvidence[id].anchor)));
+      const expectedClaims = [...published, verifiedProfile.name, verifiedProfile.positioning, ...verifiedProfile.about].filter(c=>c.publish);
+      assert.equal(content.claims.length, expectedClaims.length);
+      for (const claim of expectedClaims) {
+        assert.ok(['corroborated','owner-confirmed'].includes(claim.status) && claim.sourceIds.length>0, `Unsupported profile claim ${claim.id}`);
+        assert.ok(content.claims.some(c=>c.id===claim.id&&c.text===claim.text), `Profile publication mismatch ${claim.id}`);
+      }
+      assert.equal(content.forbidden,0); assert.ok(content.minBody>=16);
+      assert.equal(verifiedProfile.contacts.approved,false); assert.equal(verifiedProfile.contacts.items.length,0);
+      assert.equal(verifiedProfile.resume.approved,false); assert.equal(verifiedProfile.publication.approved,false);
+      assert.equal(content.contact.links,0); assert.equal(content.contact.forms,0);
+      assert.equal(content.contact.text,'Contact details are not publicly listed.');
+      assert.ok(!/GPA|certified|years of experience|graduat|available for|2027/i.test(content.about));
+      row.profile = {categories:content.categories,claims:content.claims.length,caseLinks:content.targets.length,minBody:content.minBody,contact:'PASS: no approved channels, no contact actions'};
+      for (const selector of ['#expertise','#about','#contact']) {
+        const rect = await evaluate(`(() => {const r=document.querySelector('${selector}').getBoundingClientRect();return{x:r.left+scrollX,y:r.top+scrollY,width:r.width,height:r.height}})()`);
+        const shot = await tab('Page.captureScreenshot',{format:'png',captureBeyondViewport:true,clip:{...rect,scale:1}});
+        writeFileSync(join(output,`${selector.slice(1)}-${width}.png`),Buffer.from(shot.data,'base64'));
+      }
+      const closing = await evaluate(`(() => {const r=document.querySelector('#expertise').getBoundingClientRect();return{x:0,y:r.top+scrollY,width:innerWidth,height:document.documentElement.scrollHeight-(r.top+scrollY)}})()`);
+      const shot = await tab('Page.captureScreenshot',{format:'png',captureBeyondViewport:true,clip:{...closing,scale:1}});
+      writeFileSync(join(output,`closing-${width}.png`),Buffer.from(shot.data,'base64'));
+    }
     if (projectsMode) {
       const cases = await evaluate(`(() => {
         const cases=[...document.querySelectorAll('.case-study')];
@@ -207,6 +246,107 @@ try {
       report.caseNavigation.push({anchor,keyboard:'PASS',focus:'PASS',refresh:'PASS',backForward:'PASS',directHash:'PASS'});
     }
   }
+  if (profileMode) {
+    report.profileNavigation = [];
+    await navigate('http://127.0.0.1:4180/#expertise');
+    const links = await evaluate(`[...document.querySelectorAll('.expertise__examples a')].map(a=>a.hash)`);
+    for (let i=0;i<links.length;i++) {
+      await evaluate(`document.querySelectorAll('.expertise__examples a')[${i}].focus()`);
+      assert.equal(await evaluate('getComputedStyle(document.activeElement).outlineStyle'),'solid');
+      await key('Enter'); await sleep(100);
+      assert.equal(await evaluate('location.hash'),links[i]);
+      assert.ok(await evaluate(`document.activeElement.id===location.hash.slice(1)`));
+      await evaluate('history.back()'); await sleep(100);
+      assert.equal(await evaluate('location.hash'),'#expertise');
+      report.profileNavigation.push({target:links[i],keyboard:'PASS',focus:'PASS',returnHistory:'PASS'});
+    }
+    for (const id of ['expertise','about','contact']) {
+      await navigate('http://127.0.0.1:4180/#'+id);
+      assert.equal(await evaluate(`document.querySelector('.mobile-menu a[aria-current="location"]').hash`),'#'+id);
+      assert.ok(await evaluate(`document.querySelector('#${id}').getBoundingClientRect().top<innerHeight`));
+    }
+  }
+  if (uxMode) {
+    const selected = () => evaluate(`document.querySelector('.desktop-nav a[aria-current="location"]').hash`);
+    const pointer = (x,y) => tab('Input.dispatchMouseEvent',{type:'mouseMoved',x,y});
+    await tab('Emulation.setDeviceMetricsOverride',{width:1440,height:900,deviceScaleFactor:1,mobile:false});
+    await navigate('http://127.0.0.1:4180/#intro');
+    const history = await evaluate('({hash:location.hash,length:history.length})');
+    report.scrollNavigation = [];
+    for (const [destination,expected] of [['#projects','projects'],['#project-sagelms','projects'],['#expertise','expertise'],['#intro','intro']]) {
+      await evaluate(`scrollTo(0,document.querySelector('${destination}').getBoundingClientRect().top+scrollY-24)`);
+      await sleep(160);
+      assert.equal(await selected(),'#'+expected,`Scroll active ${destination}`);
+      assert.deepEqual(await evaluate('({hash:location.hash,length:history.length})'),history,'Scrolling must not mutate URL/history');
+      report.scrollNavigation.push({destination,active:expected,urlUnchanged:'PASS'});
+    }
+    for (const id of ['projects','expertise']) {
+      for (const [offset,expected] of [[-4,id==='projects'?'intro':'projects'],[4,id]]) {
+        await evaluate(`scrollTo(0,document.querySelector('#${id}').getBoundingClientRect().top+scrollY-Math.round(innerHeight*.5)+${offset})`);
+        await sleep(160); assert.equal(await selected(),'#'+expected,'Section boundary '+id+'/'+offset);
+      }
+    }
+    await evaluate(`scrollTo(0,document.querySelector('#about').getBoundingClientRect().top+scrollY-Math.round(innerHeight*.5)+4)`); await sleep(160);
+    assert.equal(await selected(),'#about','Short About section while scrolling');
+    await evaluate('scrollTo(0,document.documentElement.scrollHeight)'); await sleep(160);
+    assert.equal(await selected(),'#contact','Bottom-of-document contact');
+    await navigate('http://127.0.0.1:4180/#about');
+    assert.equal(await selected(),'#about','Explicit short anchor wins at bottom');
+    // Same-hash activation must also restore anchor intent after manual scrolling.
+    await evaluate('scrollTo(0,0)'); await sleep(160); assert.equal(await selected(),'#intro');
+    await evaluate(`document.querySelector('.desktop-nav a[href="#about"]').focus()`); await key('Enter'); await sleep(160);
+    assert.equal(await selected(),'#about','Same-hash link activation');
+    report.boundariesAndHashIntent='PASS';
+
+    await navigate('http://127.0.0.1:4180/');
+    const rowRect=await evaluate(`(() => {const el=document.querySelector('.project-row');el.scrollIntoView();const r=el.getBoundingClientRect();return{x:r.x,y:r.y,width:r.width,height:r.height}})()`);
+    await pointer(2,2); await sleep(220);
+    const before=await evaluate(`({color:getComputedStyle(document.querySelector('.project-row h3 a')).color,height:document.querySelector('.project-row').getBoundingClientRect().height})`);
+    await pointer(rowRect.x+10,rowRect.y+10); await sleep(220);
+    const hovered=await evaluate(`({color:getComputedStyle(document.querySelector('.project-row h3 a')).color,height:document.querySelector('.project-row').getBoundingClientRect().height,transform:getComputedStyle(document.querySelector('.project-row')).transform})`);
+    assert.notEqual(hovered.color,before.color); assert.equal(hovered.height,before.height); assert.equal(hovered.transform,'none');
+    await pointer(2,2); await evaluate(`document.querySelector('.project-row .project-action').focus()`); await key('Tab'); await sleep(220);
+    assert.equal(await evaluate('getComputedStyle(document.activeElement).outlineStyle'),'solid');
+    assert.equal(await evaluate(`getComputedStyle(document.querySelector('.project-row h3 a')).color`),hovered.color);
+    const stateShot=async name=>{const s=await tab('Page.captureScreenshot',{format:'png',captureBeyondViewport:false});writeFileSync(join(output,name),Buffer.from(s.data,'base64'));};
+    await stateShot('project-row-keyboard.png');
+    await navigate('http://127.0.0.1:4180/'); await pointer(2,2); await sleep(220);
+    const terminalBefore=await evaluate(`getComputedStyle(document.querySelector('.profile-terminal')).borderTopColor`);
+    const terminalRect=await evaluate(`(() => {const r=document.querySelector('.profile-terminal').getBoundingClientRect();return{x:r.x,y:r.y}})()`);
+    await pointer(terminalRect.x+20,terminalRect.y+20); await sleep(220);
+    assert.notEqual(await evaluate(`getComputedStyle(document.querySelector('.profile-terminal')).borderTopColor`),terminalBefore);
+    assert.equal(await evaluate(`document.querySelector('.profile-terminal').querySelectorAll('button,input,[tabindex]').length`),0);
+    await stateShot('terminal-hover.png');
+    await pointer(2,2);
+    report.hoverFocus={rowColor:'PASS',rowGeometry:'UNCHANGED',keyboardOutline:'PASS',terminalBorder:'PASS',terminalTabStops:0};
+
+    await tab('Emulation.setDeviceMetricsOverride',{width:390,height:844,deviceScaleFactor:1,mobile:true});
+    await navigate('http://127.0.0.1:4180/');
+    await evaluate(`document.querySelector('summary').focus()`);
+    for(const type of ['keyDown','keyUp']) await tab('Input.dispatchKeyEvent',{type,key:' ',code:'Space',windowsVirtualKeyCode:32,...(type==='keyDown'?{text:' '}: {})});
+    assert.equal(await evaluate(`document.querySelector('details').open`),true,'Space opens native menu');
+    await key('Escape'); assert.ok(await evaluate(`!document.querySelector('details').open&&document.activeElement.tagName==='SUMMARY'`));
+    report.menuSpaceEscape='PASS';
+    report.zoomReflow=[];
+    // A 200% layout reflow proxy: half the CSS viewport, double physical pixel density.
+    // This is not a claim that Chrome's native toolbar zoom was changed.
+    for(const physical of [1440,1024]) {
+      const width=physical/2;
+      await tab('Emulation.setDeviceMetricsOverride',{width,height:900,deviceScaleFactor:2,mobile:false});
+      await navigate('http://127.0.0.1:4180/');
+      assert.ok(await evaluate('document.documentElement.scrollWidth<=innerWidth+1'));
+      assert.ok(await evaluate(`document.querySelector('.profile-terminal__code').scrollWidth<=document.querySelector('.profile-terminal__code').clientWidth+1`));
+      await stateShot(`zoom-reflow-${physical}.png`);
+      await evaluate(`document.querySelector('#expertise').scrollIntoView()`); await stateShot(`zoom-reflow-closing-${physical}.png`);
+      report.zoomReflow.push({physicalWidth:physical,cssWidth:width,deviceScaleFactor:2,overflow:'PASS',method:'200% layout reflow proxy; native browser zoom not changed'});
+    }
+    await tab('Emulation.setEmulatedMedia',{features:[{name:'prefers-reduced-motion',value:'reduce'}]});
+    const motion=await evaluate(`['.project-row','.project-row h3 a','.profile-terminal','.profile-terminal__titlebar','.section-nav a','.project-action'].map(selector=>({selector,duration:getComputedStyle(document.querySelector(selector)).transitionDuration,animation:getComputedStyle(document.querySelector(selector)).animationName}))`);
+    assert.ok(motion.every(item=>item.duration==='0s'&&item.animation==='none')); report.motion=motion;
+    await tab('Emulation.setEmulatedMedia',{features:[]});
+    await tab('Emulation.setDeviceMetricsOverride',{width:320,height:844,deviceScaleFactor:1,mobile:true});
+    await navigate('http://127.0.0.1:4180/');
+  }
   await navigate('http://127.0.0.1:4180/'); await key('Tab');
   assert.ok(await evaluate('document.activeElement.classList.contains("skip-link")&&getComputedStyle(document.activeElement).outlineStyle==="solid"'));
   await key('Enter'); assert.equal(await evaluate('document.activeElement.id'), 'main');
@@ -233,7 +373,7 @@ try {
   assert.equal(report.runtimeErrors.length, 0);
   report.status = 'PASS';
   await send('Browser.close');
-  console.log(`PASS: dev/production mounts, ${sizes.length} viewports, mobile keyboard/menu/anchors, skip link, reduced motion, bundle boundaries and four denied dev paths.${heroMode ? ' Hero geometry, verified terminal text, selection, wrapping and CTA checked.' : ''}${projectsMode ? ' Projects: published claims, figures, sequential Tab, source focus, direct hash, refresh and back/forward checked.' : ''}`);
+  console.log(`PASS: dev/production mounts, ${sizes.length} viewports, mobile keyboard/menu/anchors, skip link, reduced motion, bundle boundaries and four denied dev paths.${heroMode ? ' Hero geometry, verified terminal text, selection, wrapping and CTA checked.' : ''}${projectsMode ? ' Projects: published claims, figures, sequential Tab, source focus, direct hash, refresh and back/forward checked.' : ''}${profileMode ? ' Expertise/About/Contact: published text, technologies, case links, privacy gates, focus and section navigation checked.' : ''}`);
 } catch (error) {
   report.status = 'FAIL'; report.error = error.stack; console.error(error.message); process.exitCode = 1;
 } finally {
