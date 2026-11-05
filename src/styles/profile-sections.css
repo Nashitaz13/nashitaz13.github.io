@@ -1,0 +1,33 @@
+.expertise__intro { max-width: 65ch; margin-bottom: var(--space-8); color: var(--color-muted); }
+.expertise__rows { list-style: none; padding: 0; margin: 0; }
+.expertise__row { display: grid; grid-template-columns: minmax(12rem, .7fr) minmax(0, 1.3fr); gap: var(--space-8); padding-block: var(--space-8); border-top: 1px solid var(--color-border); }
+.expertise__category { display: flex; align-items: baseline; gap: var(--space-5); }
+.expertise__category h3 { font: 500 clamp(1.25rem, 2vw, 1.5rem)/1.3 var(--font-display); letter-spacing: -.02em; }
+.expertise__context { min-width: 0; }
+.expertise__context > p { max-width: 65ch; margin-bottom: var(--space-4); color: var(--color-muted); }
+.expertise__examples { margin-top: var(--space-4); }
+.expertise__examples .project-action { max-width: 100%; }
+.expertise__examples .project-action > span { align-self: start; }
+.about, .contact { display: grid; grid-template-columns: minmax(12rem, .7fr) minmax(0, 1.3fr); gap: var(--space-8); }
+.about .section-label, .contact .section-label { margin: 0; }
+.about__content, .contact__content { min-width: 0; }
+.about__identity h3 { font: 500 clamp(1.5rem, 2.4vw, 2rem)/1.25 var(--font-display); letter-spacing: -.025em; }
+.about__direction { margin-top: var(--space-4); }
+.about__direction > p + p { margin-top: var(--space-2); }
+.about__direction > p:last-child { max-width: 40ch; }
+.about__context { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: var(--space-8); margin-top: var(--space-8); padding-top: var(--space-6); border-top: 1px solid var(--color-border); }
+.about__context h3 { font-size: var(--text-body); font-weight: 600; margin-bottom: var(--space-3); }
+.about__context p, .contact__content p { max-width: 60ch; color: var(--color-muted); }
+.contact { align-items: baseline; }
+.contact__content .project-action { max-width: 100%; }
+@media (max-width: 900px) {
+  .expertise__row, .about, .contact { grid-template-columns: minmax(0, 1fr); gap: var(--space-5); }
+  .expertise__context { padding-left: calc(var(--space-5) + 2ch); }
+  .expertise__context > p { max-width: 68ch; }
+}
+@media (max-width: 600px) {
+  .expertise__row { gap: var(--space-4); }
+  .expertise__context { padding-left: 0; }
+  .about__context { grid-template-columns: minmax(0, 1fr); gap: var(--space-6); }
+  .expertise__examples .project-action { font-size: .9375rem; }
+}
