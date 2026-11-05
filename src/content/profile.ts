@@ -40,6 +40,14 @@ export const profile = {
     publish: true,
   },
   primaryAction: { label: 'Explore projects', href: '#projects' },
+  currentRole: {
+    id: 'P06',
+    text: 'DevOps Intern at Bosch Global Software Technologies Vietnam (BGSV).',
+    sourceIds: ['OWNER02'],
+    status: 'owner-confirmed',
+    scope: 'individual',
+    publish: true,
+  },
   about: [
     {
       id: 'P04',
@@ -109,7 +117,17 @@ export const profile = {
     technologies: readonly string[];
     projectIds: readonly string[];
   })[],
-  contacts: { approved: false, items: [] },
+  contacts: {
+    approved: true,
+    sourceIds: ['CV01', 'OWNER02'],
+    location: 'Ho Chi Minh City, Vietnam',
+    items: [
+      { label: 'Email · buingocthai00@gmail.com', href: 'mailto:buingocthai00@gmail.com' },
+      { label: 'GitHub · Nashitaz13', href: 'https://github.com/Nashitaz13' },
+      { label: 'LinkedIn · nashitaz13', href: 'https://www.linkedin.com/in/nashitaz13/' },
+      { label: 'Instagram · nt._.1t', href: 'https://www.instagram.com/nt._.1t/' },
+    ],
+  },
   resume: { approved: false, href: null },
   publication: { approved: false, items: [] },
 } satisfies {
@@ -117,13 +135,14 @@ export const profile = {
   positioning: Claim;
   intro: Claim;
   primaryAction: { label: string; href: string };
+  currentRole: Claim;
   about: readonly Claim[];
   expertise: readonly (Claim & {
     category: string;
     technologies: readonly string[];
     projectIds: readonly string[];
   })[];
-  contacts: { approved: boolean; items: readonly { label: string; href: string }[] };
+  contacts: { approved: boolean; sourceIds: readonly string[]; location: string; items: readonly { label: string; href: string }[] };
   resume: { approved: boolean; href: string | null };
   publication: { approved: boolean; items: readonly { title: string; href: string }[] };
 };

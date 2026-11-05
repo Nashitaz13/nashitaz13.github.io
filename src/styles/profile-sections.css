@@ -20,6 +20,10 @@
 .about__context p, .contact__content p { max-width: 60ch; color: var(--color-muted); }
 .contact { align-items: baseline; }
 .contact__content .project-action { max-width: 100%; }
+.contact__location { margin-bottom: var(--space-3); }
+.contact__content li + li { border-top: 1px solid var(--color-border); }
+.contact__content .project-action { display: flex; width: 100%; padding-block: var(--space-3); }
+.contact__content .contact__label { flex: 1; min-width: 0; overflow-wrap: anywhere; }
 @media (max-width: 900px) {
   .expertise__row, .about, .contact { grid-template-columns: minmax(0, 1fr); gap: var(--space-5); }
   .expertise__context { padding-left: calc(var(--space-5) + 2ch); }
